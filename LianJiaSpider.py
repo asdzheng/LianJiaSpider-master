@@ -218,7 +218,7 @@ def chengjiao_spider(db_cj,url_page=u"http://bj.lianjia.com/chengjiao/pg1rs%E5%8
         exception_write('chengjiao_spider',url_page)
         return
     
-    cj_list=soup.findAll('div',{'class':'info-panel'})
+    cj_list=soup.findAll('div',{'class':'info'})
     for cj in cj_list:
         info_dict={}
         href=cj.find('a')

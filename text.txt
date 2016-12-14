@@ -1,0 +1,10 @@
+<div class="info">
+      <div class="title"><a href="http://bj.lianjia.com/chengjiao/BJCY00413200.html" target="_blank">10AM新坐标 1室1厅 55平米</a></div>
+      <div class="address"><div class="houseInfo"><span class="houseIcon"></span>北 | 其他&nbsp;| 有电梯</div>
+      <div class="dealDate">2011.10.15</div>
+      <div class="totalPrice"><span class='number'>121.5</span>万</div></div>
+      <div class="flood"><div class="positionInfo"><span class="positionIcon"></span>中楼层(共30层) 2006年建塔楼</div>
+      <div class="source">链家成交</div>
+      <div class="unitPrice"><span class="number">22071</span>元/平</div></div>
+      <div class="dealHouseInfo"><span class="dealHouseIcon"></span><span class="dealHouseTxt"><span>房本满五年</span><span>距14号线(东段)方庄476米</span></span></div>
+</div>
