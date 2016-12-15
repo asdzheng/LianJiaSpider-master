@@ -204,11 +204,16 @@ def chengjiao_spider(db_cj,url_page=u"http://bj.lianjia.com/chengjiao/pg1rs%E5%8
     """
     爬取页面链接中的成交记录
     """
+
+    print "url = ", url_page
+
     try:
         req = urllib2.Request(url_page,headers=hds[random.randint(0,len(hds)-1)])
         source_code = urllib2.urlopen(req,timeout=10).read()
         plain_text=unicode(source_code)#,errors='ignore')   
         soup = BeautifulSoup(plain_text)
+
+        # print soup
     except (urllib2.HTTPError, urllib2.URLError), e:
         print e
         exception_write('chengjiao_spider',url_page)
@@ -221,40 +226,95 @@ def chengjiao_spider(db_cj,url_page=u"http://bj.lianjia.com/chengjiao/pg1rs%E5%8
     cj_list=soup.findAll('div',{'class':'info'})
     for cj in cj_list:
         info_dict={}
-        href=cj.find('a')
-        if not href:
-            continue
-        info_dict.update({u'链接':href.attrs['href']})
-        content=cj.find('h2').text.split()
-        if content:
-            info_dict.update({u'小区名称':content[0]})
-            info_dict.update({u'户型':content[1]})
-            info_dict.update({u'面积':content[2]})
-        content=unicode(cj.find('div',{'class':'con'}).renderContents().strip())
-        content=content.split('/')
-        if content:
-            info_dict.update({u'朝向':content[0].strip()})
-            info_dict.update({u'楼层':content[1].strip()})
-            if len(content)>=3:
-                content[2]=content[2].strip();
-                info_dict.update({u'建造时间':content[2][:4]}) 
-        content=cj.findAll('div',{'class':'div-cun'})
-        if content:
-            info_dict.update({u'签约时间':content[0].text})
-            info_dict.update({u'签约单价':content[1].text})
-            info_dict.update({u'签约总价':content[2].text})
-        content=cj.find('div',{'class':'introduce'}).text.strip().split()
-        if content:
-            for c in content:
-                if c.find(u'满')!=-1:
-                    info_dict.update({u'房产类型':c})
-                elif c.find(u'学')!=-1:
-                    info_dict.update({u'学区':c})
-                elif c.find(u'距')!=-1:
-                    info_dict.update({u'地铁':c})
-        
-        command=gen_chengjiao_insert_command(info_dict)
-        db_cj.execute(command,1)
+        href = cj.find('a')
+
+        if href:
+            info_dict.update({u'链接': href.attrs['href']})
+
+            # print href.attrs['href'],
+
+            content = href.text.split(" ")
+            if content:
+                info_dict.update({u'小区名称': content[0]})
+                info_dict.update({u'户型': content[1]})
+                info_dict.update({u'面积': content[2]})
+
+            #
+            content = str(cj.find('div', {'class': 'houseInfo'}).text)
+            info_dict.update({u'朝向': content.split("|")[0]})
+
+            #
+            content = str(cj.find('div', {'class': 'positionInfo'}).text)
+            position = content.split(" ")
+            info_dict.update({u'楼层': position[0]})
+            info_dict.update({u'建造时间': position[1]})
+
+            content = cj.find('div', {'class': 'dealDate'}).text
+            info_dict.update({u'签约时间': content})
+
+            content = cj.find('div', {'class': 'unitPrice'}).text
+            info_dict.update({u'签约单价': content})
+
+            content = cj.find('div', {'class': 'totalPrice'}).text
+            info_dict.update({u'签约总价': content})
+
+            # content = cj.find('div', {'class': 'dealHouseInfo'}).text
+            # info_dict.update({u'地铁': content})
+            try :
+                content = cj.find('div', {'class': 'dealHouseInfo'}).find('span', {'class': 'dealHouseTxt'}).find_all("span")
+            except Exception as e :
+                info_dict.update({u'房产类型': ""})
+                info_dict.update({u'学区': ""})
+                info_dict.update({u'地铁': ""})
+                command = gen_chengjiao_insert_command(info_dict)
+                db_cj.execute(command, 1)
+                #有些没有房产类型和地铁，就跳过
+                continue
+
+            if len(content) > 1 :
+                span_type = content[0].text
+                span_train = content[1].text
+            else:
+                span_train = content[0].text
+                span_type = ''
+
+            info_dict.update({u'房产类型': span_type})
+            info_dict.update({u'学区': ""})
+            info_dict.update({u'地铁': span_train})
+            # href=cj.find('a')
+            # if not href:
+            #     continue
+            # info_dict.update({u'链接':href.attrs['href']})
+            # content=cj.find('h2').text.split()
+            # if content:
+            #     info_dict.update({u'小区名称':content[0]})
+            #     info_dict.update({u'户型':content[1]})
+            #     info_dict.update({u'面积':content[2]})
+            # content=unicode(cj.find('div',{'class':'con'}).renderContents().strip())
+            # content=content.split('/')
+            # if content:
+            #     info_dict.update({u'朝向':content[0].strip()})
+            #     info_dict.update({u'楼层':content[1].strip()})
+            #     if len(content)>=3:
+            #         content[2]=content[2].strip();
+            #         info_dict.update({u'建造时间':content[2][:4]})
+            # content=cj.findAll('div',{'class':'div-cun'})
+            # if content:
+            #     info_dict.update({u'签约时间':content[0].text})
+            #     info_dict.update({u'签约单价':content[1].text})
+            #     info_dict.update({u'签约总价':content[2].text})
+            # content=cj.find('div',{'class':'introduce'}).text.strip().split()
+            # if content:
+            #     for c in content:
+            #         if c.find(u'满')!=-1:
+            #             info_dict.update({u'房产类型':c})
+            #         elif c.find(u'学')!=-1:
+            #             info_dict.update({u'学区':c})
+            #         elif c.find(u'距')!=-1:
+            #             info_dict.update({u'地铁':c})
+
+            command=gen_chengjiao_insert_command(info_dict)
+            db_cj.execute(command,1)
 
 
 def xiaoqu_chengjiao_spider(db_cj,xq_name=u"冠庭园"):
@@ -262,6 +322,7 @@ def xiaoqu_chengjiao_spider(db_cj,xq_name=u"冠庭园"):
     爬取小区成交记录
     """
     url=u"http://bj.lianjia.com/chengjiao/rs"+urllib2.quote(xq_name)+"/"
+
     try:
         req = urllib2.Request(url,headers=hds[random.randint(0,len(hds)-1)])
         source_code = urllib2.urlopen(req,timeout=10).read()
